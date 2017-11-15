@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">OCC Course Finder</string>
+    <string name="hello_courses">Hello OCC Courses!</string>
+</resources>
