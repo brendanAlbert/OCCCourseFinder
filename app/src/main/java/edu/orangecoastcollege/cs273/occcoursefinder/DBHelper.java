@@ -16,6 +16,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * DBHelper is a helper model class that performs most of the functions related
+ * to persisting data.
+ *
+ * The importCoursesFromCSV, importInstructorsFromCSV and importOfferingsFromCSV methods
+ * convert the data from CSV files into rows in tables of the  SQLite database.
+ *
+ * There are also getter and setter functions for the various object types,
+ * Courses, Instructors and Offerings, being stored in our OCC database.
+ */
 class DBHelper extends SQLiteOpenHelper {
 
     private Context mContext;
@@ -45,11 +55,27 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String FIELD_COURSE_ID = "course_id";
     private static final String FIELD_INSTRUCTOR_ID = "instructor_id";
 
+    /**
+     * DBHelper is a parameterized constructor that accepts a Context argument.
+     * This Context is passed to the super constructor.
+     * @param context
+     */
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         mContext = context;
     }
 
+    /**
+     * onCreate is one of two methods which must be implemented when extending SQLiteOpenHelper.
+     *
+     * In this method we use SQL queries to build the various tables in the database.
+     *
+     * The new and interesting aspect of this project is how to make our database relational.
+     * We will relate Courses to Instructors using a third table, Offerings.
+     * In the Offerings table, a single entry will have two foreign keys.  These foreign keys
+     * correspond to the primary keys of the Course and Instructor being related.
+     * @param database
+     */
     @Override
     public void onCreate(SQLiteDatabase database) {
         String createQuery = "CREATE TABLE " + COURSES_TABLE + "("
@@ -80,18 +106,39 @@ class DBHelper extends SQLiteOpenHelper {
         database.execSQL(createQuery);
     }
 
+    /**
+     * onUpgrade is the second of two methods which must be implemented
+     * when extending SQLiteOpenHelper.
+     *
+     * onUpgrade drops the previous tables if they exist and calls onCreate
+     * to rebuild the upgraded tables.
+     * @param database
+     * @param oldVersion
+     * @param newVersion
+     */
     @Override
     public void onUpgrade(SQLiteDatabase database,
                           int oldVersion,
                           int newVersion) {
         database.execSQL("DROP TABLE IF EXISTS " + COURSES_TABLE);
         database.execSQL("DROP TABLE IF EXISTS " + INSTRUCTORS_TABLE);
-        //TODO:  Drop the Offerings table
+        //COMPLETED:  Drop the Offerings table
+        database.execSQL("DROP TABLE IF EXISTS " + OFFERINGS_TABLE);
         onCreate(database);
     }
 
     //********** COURSE TABLE OPERATIONS:  ADD, GETALL, EDIT, DELETE
 
+    /**
+     * addCourse adds a, you guessed it, course!
+     * A writable reference to the database is acquired,
+     * a ContentValues object is instantiated and values from the course
+     * argument are put into it.
+     *
+     * This ContentValues object is then inserted into the database.
+     * Finally the database is closed.
+     * @param course
+     */
     public void addCourse(Course course) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -106,6 +153,11 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * getAllCourses returns a list of Courses from the database, which was
+     * populated from the courses csv file.
+     * @return List<Course>
+     */
     public List<Course> getAllCourses() {
         List<Course> coursesList = new ArrayList<>();
         SQLiteDatabase database = this.getReadableDatabase();
@@ -132,6 +184,12 @@ class DBHelper extends SQLiteOpenHelper {
         return coursesList;
     }
 
+    /**
+     * deleteCourse takes a Course argument.
+     * This course is deleted from the database based on its id.
+     * Then close the db.
+     * @param course
+     */
     public void deleteCourse(Course course) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -141,12 +199,26 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * deleteAllCourses() gets a writable reference to the database.
+     * Then all of the entries in the Courses table are deleted/dropped, but the table
+     * is intact, it is just empty.
+     * We then close the db.
+     */
     public void deleteAllCourses() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(COURSES_TABLE, null, null);
         db.close();
     }
 
+    /**
+     * updateCourse takes a Course argument.
+     * Using this argument, a new ContentValues object is populated.
+     * Then this ContentValues object is used to update the respective entry in the
+     * Courses table.
+     * Closes the db.
+     * @param course
+     */
     public void updateCourse(Course course) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -160,6 +232,20 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * getCourse returns a Course based on the long id argument.
+     *
+     *
+     * A readable database reference is acquired and a Cursor object is populated.
+     * The Cursor is populated using the information from the database of the Course associated
+     * with the id argument.
+     *
+     * Using the Cursor we instantiate a new Course object.
+     * Both the cursor and database are closed.
+     * Return the new Course.
+     * @param id of the course to be retrieved.
+     * @return
+     */
     public Course getCourse(long id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(
@@ -186,6 +272,11 @@ class DBHelper extends SQLiteOpenHelper {
 
     //********** INSTRUCTOR TABLE OPERATIONS:  ADD, GETALL, EDIT, DELETE
 
+    /**
+     * addInstructor adds an instructor to the database using the data provided from the
+     * Instructor argument passed in.
+     * @param instructor
+     */
     public void addInstructor(Instructor instructor) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -200,6 +291,10 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * getAllInstructors returns a List of all Instructors in the OCC database.
+     * @return
+     */
     public List<Instructor> getAllInstructors() {
         List<Instructor> instructorsList = new ArrayList<>();
         SQLiteDatabase database = this.getReadableDatabase();
@@ -226,6 +321,11 @@ class DBHelper extends SQLiteOpenHelper {
         return instructorsList;
     }
 
+    /**
+     * deleteInstructor takes an Instructor argument.  The Instructor table of the database is
+     * searched for an instructor matching the provided argument and that entry is deleted.
+     * @param instructor
+     */
     public void deleteInstructor(Instructor instructor) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -235,12 +335,22 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * deleteAllInstructors() deletes/drops all Instructors from the Instructors table of the
+     * OCC database.
+     */
     public void deleteAllInstructors() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(INSTRUCTORS_TABLE, null, null);
         db.close();
     }
 
+    /**
+     * updateInstructor takes an Instructor argument.  The Instructors table is searched for
+     * an existing Instructor that matches the argument, and updates the existing Instructors
+     * information to match that of the provided Instructor argument.
+     * @param instructor
+     */
     public void updateInstructor(Instructor instructor) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -254,6 +364,12 @@ class DBHelper extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * getInstructor accepts a long as an argument.  An Instructor matching that id
+     * is Instantiated and returned using the data retrieved from the database.
+     * @param id
+     * @return
+     */
     public Instructor getInstructor(long id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(
@@ -279,22 +395,39 @@ class DBHelper extends SQLiteOpenHelper {
 
 
     //********** OFFERING TABLE OPERATIONS:  ADD, GETALL, EDIT, DELETE
-    //TODO:  Create the following methods: addOffering, getAllOfferings, deleteOffering
-    //TODO:  deleteAllOfferings, updateOffering, and getOffering
-    //TODO:  Use the Courses and Instructors methods above as a guide.
-    public void addOffering(Offering offering) {
+    //COMPLETED:  Create the following methods: addOffering, getAllOfferings, deleteOffering
+    //COMPLETED:  deleteAllOfferings, updateOffering, and getOffering
+    //COMPLETED:  Use the Courses and Instructors methods above as a guide.
+
+    /**
+     * addOffering accepts four arguments.  A Course CRN number, a semester code,
+     * the id of the course and the id of the instructor.
+     *
+     * The provided arguments are put into a ContentValues object and inserted into the db.
+     *
+     * @param crn this is unique identifier for a Course
+     * @param semesterCode this is the semester in which the course is being taught
+     * @param courseId id of the course
+     * @param instructorId id of the instructor
+     */
+    public void addOffering(int crn, int semesterCode, long courseId, long instructorId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
-        values.put(FIELD_CRN, offering.getCRN());
-        values.put(FIELD_SEMESTER_CODE, offering.getSemesterCode());
-        values.put(FIELD_COURSE_ID, offering.getCourse().getId());
-        values.put(FIELD_INSTRUCTOR_ID, offering.getInstructor().getId());
+        values.put(FIELD_CRN, crn);
+        values.put(FIELD_SEMESTER_CODE, semesterCode);
+        values.put(FIELD_COURSE_ID, courseId);
+        values.put(FIELD_INSTRUCTOR_ID, instructorId);
 
         db.insert(OFFERINGS_TABLE, null, values);
 
         db.close();
     }
+
+    /**
+     * getAllOfferings returns all Offerings in the db.
+     * @return
+     */
     public List<Offering> getAllOfferings() {
         List<Offering> offeringList = new ArrayList<>();
         SQLiteDatabase database = this.getReadableDatabase();
@@ -318,17 +451,32 @@ class DBHelper extends SQLiteOpenHelper {
         database.close();
         return offeringList;
     }
+
+    /**
+     * deleteOffering deletes the entry in the database matching the provided argument.
+     * @param offering
+     */
     public void deleteOffering(Offering offering) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(OFFERINGS_TABLE, FIELD_CRN + " = ?",
                 new String[]{String.valueOf(offering.getCRN())});
         db.close();
     }
+
+    /**
+     * deleteAllOfferings deletes all Offerings from the Offerings table in the database.
+     */
     public void deleteAllOfferings() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(OFFERINGS_TABLE, null, null);
         db.close();
     }
+
+    /**
+     * updateOffering updates the entry in the Offerings table which matches the offering
+     * argument.
+     * @param offering
+     */
     public void updateOffering(Offering offering){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -342,6 +490,13 @@ class DBHelper extends SQLiteOpenHelper {
                 new String[]{String.valueOf(offering.getCRN())});
         db.close();
     }
+
+    /**
+     * getOffering returns an Offering object.  The Offering object is built from the
+     * values of the entry stored in the table which matches the id argument.
+     * @param id
+     * @return
+     */
     public Offering getOffering(long id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(
@@ -372,8 +527,26 @@ class DBHelper extends SQLiteOpenHelper {
 
 
     //********** IMPORT FROM CSV OPERATIONS:  Courses, Instructors and Offerings
-    //TODO:  Write the code for the import OfferingsFromCSV method.
-    public boolean importOfferingsFromCSV(String csvFile) {
+    //COMPLETED:  Write the code for the import OfferingsFromCSV method.
+
+    /**
+     * importOfferingsFromCSV accepts a string argument which represents the name of the
+     * csv file asset we are importing data from.
+     *
+     * Steps:
+     * 1) Instantiate an AssetManager object by get(ting)Assets from the current context.
+     * 2) Declare an inputStream.
+     * 3) Using a try catch block, open the AssetManager object using the csvFile name argument
+     * and store the resulting inputStream.
+     * 4) Instantiate a BufferedReader object using a new InputStreamReader instantiated
+     * using the inputStream as an argument.
+     * 5) In a try catch block, while the BufferedReader object is not null, addOfferings
+     * to the Offerings table using lines read from the BufferedReader.
+     * 6) return true if successful
+     * @param csvFile name of the csv file
+     * @return true is successful
+     */
+    boolean importOfferingsFromCSV(String csvFile) {
         AssetManager manager = mContext.getAssets();
         InputStream inputStream;
         try {
@@ -391,16 +564,37 @@ class DBHelper extends SQLiteOpenHelper {
                     Log.d("OCC Course Finder", "Skipping Bad CSV Row: " + Arrays.toString(fields));
                     continue;
                 }
-                int crn = fields[1].trim();
-                int semesterCode = fields[2].trim();
-                int course = fields[3].trim();
-                int instructor = fields[4].trim();
-                addOffering(new Offering(crn, semesterCode, getCourse(course)));
+                int crn = Integer.parseInt(fields[0].trim());
+                int semesterCode = Integer.parseInt(fields[1].trim());
+                Long courseId = Long.parseLong(fields[2].trim());
+                Long instructorId = Long.parseLong(fields[3].trim());
+                addOffering(crn, semesterCode, courseId, instructorId);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
-    public boolean importCoursesFromCSV(String csvFileName) {
+    /**
+     * importCoursesFromCSV accepts a string argument which represents the name of the
+     * csv file asset we are importing data from.
+     *
+     * Steps:
+     * 1) Instantiate an AssetManager object by get(ting)Assets from the current context.
+     * 2) Declare an inputStream.
+     * 3) Using a try catch block, open the AssetManager object using the csvFile name argument
+     * and store the resulting inputStream.
+     * 4) Instantiate a BufferedReader object using a new InputStreamReader instantiated
+     * using the inputStream as an argument.
+     * 5) In a try catch block, while the BufferedReader object is not null, addCourses
+     * to the Courses table using lines read from the BufferedReader.
+     * 6) return true if successful
+     * @param csvFileName name of the csv file
+     * @return true is successful
+     */
+    boolean importCoursesFromCSV(String csvFileName) {
         AssetManager manager = mContext.getAssets();
         InputStream inStream;
         try {
@@ -432,7 +626,24 @@ class DBHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public boolean importInstructorsFromCSV(String csvFileName) {
+    /**
+     * importInstructorsFromCSV accepts a string argument which represents the name of the
+     * csv file asset we are importing data from.
+     *
+     * Steps:
+     * 1) Instantiate an AssetManager object by get(ting)Assets from the current context.
+     * 2) Declare an inputStream.
+     * 3) Using a try catch block, open the AssetManager object using the csvFile name argument
+     * and store the resulting inputStream.
+     * 4) Instantiate a BufferedReader object using a new InputStreamReader instantiated
+     * using the inputStream as an argument.
+     * 5) In a try catch block, while the BufferedReader object is not null, addInstructors
+     * to the Instructors table using lines read from the BufferedReader.
+     * 6) return true if successful
+     * @param csvFileName name of the csv file
+     * @return true is successful
+     */
+    boolean importInstructorsFromCSV(String csvFileName) {
         AssetManager am = mContext.getAssets();
         InputStream inStream = null;
         try {
